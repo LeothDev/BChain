@@ -49,4 +49,8 @@ public class Mempool {
         }
         return ret;
     }
+
+    public int size(){
+        return transactions.size();
+    }
 }
