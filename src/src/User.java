@@ -2,26 +2,28 @@
 import java.security.*;
 import java.util.Random;
 import java.util.HashMap;
+import java.util.ArrayList;
 public class User extends Thread{
-
-    protected static int wallet_adr = 10010; //static because every miner has a different wallet address
+    protected static int total_wallet_number = 10010;//static because every miner has a different wallet address
+    protected int wallet_adr;
 
     protected static int Id = 40080;
     protected int my_id;
-    private PrivateKey private_key;
-    public PublicKey public_key;
+    protected PrivateKey private_key;
+    protected PublicKey public_key;
 
-    private Blockchain longest_chain;
+    protected ArrayList<Block> longest_chain;
 
-    private Wallet wallet;
-    private static HashMap<Integer, Wallet> walletMap = new HashMap<>();
+    protected Wallet wallet;
+    protected static HashMap<Integer, Wallet> walletMap = new HashMap<>();
 
 
    public User(){
        super();
        generate_keys();
        this.my_id = ++Id;
-       this.wallet = new Wallet(++wallet_adr);
+       this.wallet_adr = ++total_wallet_number;
+       this.wallet = new Wallet(wallet_adr);
        this.longest_chain = Blockchain.getLongestChain();
        walletMap.put(wallet_adr, this.wallet);
    }
@@ -32,7 +34,8 @@ public class User extends Thread{
         super(name);
         generate_keys();
         this.my_id = ++Id;
-        this.wallet = new Wallet(++wallet_adr);
+        this.wallet_adr = ++total_wallet_number;
+        this.wallet = new Wallet(wallet_adr);
         this.longest_chain = Blockchain.getLongestChain();
         walletMap.put(wallet_adr, this.wallet);
     }
@@ -41,7 +44,8 @@ public class User extends Thread{
         super(name);
         generate_keys();
         this.my_id = ++Id;
-        this.wallet = new Wallet(++wallet_adr);
+        this.wallet_adr = ++total_wallet_number;
+        this.wallet = new Wallet(wallet_adr);
         this.longest_chain = Blockchain.getLongestChain();
         walletMap.put(wallet_adr, this.wallet);
         wallet.updateBalance(initial_value);
@@ -49,40 +53,40 @@ public class User extends Thread{
 
     @Override
     public void run() {
-        //while (true) {
-        while(!isInterrupted()){
-            try {
-                // check if the user has enough money to perform the transaction
-                if (wallet.get_balance() >= 1) {
-                    // perform a transaction
-                    do_transaction(longest_chain);
+
+        try {
+            while(!isInterrupted() && !Thread.currentThread().isInterrupted()){
+            // check if the user has enough money to perform the transaction
+            if (wallet.get_balance() >= 5) {
+                // perform a transaction
+                do_transaction();
 
 
-                    //List<Block> new_chain = receive_broadcast();
-                    Blockchain new_chain = receive_broadcast();
-                    if (new_chain != null && new_chain.size() > longest_chain.size()) {
-                        // choose the longest chain
-                            // check if the last block is valid
-                            if(verify_validity(new_chain.get(new_chain.size()-1)))
-                                //update the blockchain
-                                longest_chain = new_chain;
-                    }
-
-                    // sleep for a random amount of time
-                    Thread.sleep(generateRandomIntInRange(10, 200));
-                }
-                else {
-                    System.out.println("User " + this.getId() + " does not have enough money to perform transaction.");
-                    Thread.sleep(generateRandomIntInRange(10, 200));
+                //List<Block> new_chain = receive_broadcast();
+                ArrayList<Block> new_chain = receive_broadcast();
+                if (new_chain != null && new_chain.size() > longest_chain.size()) {
+                    // choose the longest chain
+                        // check if the last block is valid
+                        if(verify_validity(new_chain.get(new_chain.size()-1)))
+                            //update the blockchain
+                            longest_chain = new_chain;
                 }
 
-            } catch (InterruptedException e) {
-                //e.printStackTrace();
+                // sleep for a random amount of time
+                Thread.sleep(generateRandomIntInRange(10, 200));
             }
+            else {
+                System.out.println("User " + this.getId() + " does not have enough money to perform transaction.");
+                Thread.sleep(generateRandomIntInRange(10, 200));
+            }
+
+        }
+        }catch (InterruptedException e) {
+            System.out.println("User " + getName() + " quit the system" );
         }
     }
 
-    public synchronized Blockchain receive_broadcast() {
+    public synchronized ArrayList<Block> receive_broadcast() {
        //return Blockchain.getLongestChain();
        return Blockchain.newChain();
     }
@@ -125,7 +129,7 @@ public class User extends Thread{
     }
 
     public PublicKey getPublicKey(){return public_key;}
-    private PrivateKey getPrivateKey(){return private_key;}
+    protected PrivateKey getPrivateKey(){return private_key;}
     public int get_Id(){return my_id;}
 
     // generate a random integer between min and max (inclusive)
@@ -143,7 +147,9 @@ public class User extends Thread{
     }
     public int getWallet_adr(){return wallet_adr;}
 
-    public synchronized void do_transaction(Blockchain blockchain) {
+    public synchronized void do_transaction() {
+        if(longest_chain == null)
+            longest_chain = Blockchain.getLongestChain();
         // check if the user has enough money to perform the transaction
 /*        if (wallet.get_balance() < 2) {
             System.out.println("User " + this.getId() + " does not have enough money to perform transaction.");
@@ -152,16 +158,19 @@ public class User extends Thread{
         }*/
 
         // generate a random wallet number for the recipient
-        int recipientWalletNumber = generateRandomIntInRange(10010, wallet_adr);
-        double TRANSACTION_AMOUNT = generateRandomIntInRange(1,10);
+        Integer recipientWalletNumber = generateRandomIntInRange(10011, total_wallet_number);
+        double TRANSACTION_AMOUNT = generateRandomIntInRange(1,5);
 
         // create the transaction
+        //debugging statement
+        //System.out.println("I am User " + my_id + " sending money to wallet: " + recipientWalletNumber);
+        //System.out.println("Which represents Wallet object: " + getWalletByAddress(recipientWalletNumber));
         Transaction transaction = new Transaction(this.getPublicKey(), this.get_Id(),
-                TRANSACTION_AMOUNT,wallet,getWalletByAddress(recipientWalletNumber));
+                TRANSACTION_AMOUNT,wallet, getWalletByAddress(recipientWalletNumber));
 
         //Transaction transaction = new Transaction(this.getPublicKey(), this.get_Id(),recipientWalletNumber, TRANSACTION_AMOUNT);
 
-        if (TRANSACTION_AMOUNT >= 0.5)
+        if (TRANSACTION_AMOUNT >= 2)
             // I'm doing a "big" transaction! let's give some lucky Miner bitcoins
             transaction.setFee(0.1);
 
@@ -176,12 +185,18 @@ public class User extends Thread{
             //and also not double spending -> UTXO unspend transaction output
             if(wallet.get_UTXO() >= transaction.getFee() + TRANSACTION_AMOUNT) {
                 Blockchain.addToMemoryPool(transaction);
+                /*System.out.println("Now I have done a transaction, the MemPool has " +
+                        Blockchain.getTransactions().size() + " Transactions inside");*/
+                String mes = "Now I have done a transaction, the MemPool has " +
+                        Blockchain.getTransactions().size() + " Transactions inside";
+                Blockchain.printMessages(mes);
+                System.out.println("my blockchain size is: " + longest_chain.size());
                 wallet.updateUTXO(transaction.getFee() + TRANSACTION_AMOUNT);
 
                 System.out.println("User " + this.getId() + " sent " + TRANSACTION_AMOUNT + " bitcoin to wallet " + recipientWalletNumber);
 
                 // notify all waiting threads that a new transaction has been added to the memory pool
-                notifyAll();
+                //notifyAll(); in addToMemoryPool
             }
         } catch (SignatureException | NoSuchAlgorithmException | InvalidKeyException e) {
             System.out.println("User " + this.getId() + " could not sign the transaction.");

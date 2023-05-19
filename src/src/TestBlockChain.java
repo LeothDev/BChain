@@ -14,7 +14,7 @@ public class TestBlockChain {
         Block genesis = new Block(prev_hash,Merkle_root,ts,height,timestamp);
         Blockchain chain = new Blockchain(genesis);
 
-        Nakamoto.start();
+        //Nakamoto.start();
         utenti.add(Nakamoto);
 
         User n1 = new User("n1", 10);
@@ -34,6 +34,10 @@ public class TestBlockChain {
         Miner m3 = new Miner("m3");
         utenti.add(m3);
 
+        for(User utente : utenti){
+            utente.start();
+        }
+
         try {
             Thread.currentThread().sleep(5000);
         }catch(InterruptedException e){}
@@ -43,10 +47,11 @@ public class TestBlockChain {
         }
 
         for(User actives: utenti){
-            System.out.println(actives.get_Id() + ": " + "balance = " + actives.getBalance());
+            //System.out.println(actives.get_Id() + ": " + "balance = " + actives.getBalance());
+            System.out.println(actives.get_Id() + ": " + "balance = " + (User.getWalletByAddress(actives.getWallet_adr())).get_balance());
         }
         System.out.println("System finished");
 
-
+        return;
     }
 }

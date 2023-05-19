@@ -31,6 +31,10 @@ public class Wallet {
     }
     public void updateBalance(double n){
         balance = balance + n;
+        if(n>0)
+            //if n<0, means this is the sender, and UTXO has already been substracted
+            UTXO += n;
+
     }
 
 

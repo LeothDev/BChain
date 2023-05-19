@@ -45,8 +45,11 @@ public class Block {
 
     public String getHash() {
         try {
-            if (prev_hash != null)
+            if (prev_hash == null)
                 throw new InvalidHashException();
+/*            if (prev_hash.isEmpty())
+                //genesis block*/
+
             String to_hash = prev_hash + Merkle_root + String.valueOf(nonce) + String.valueOf(height);
             //update the field hash_of_current_block and return it
             this.hash = HashFunction.applySha256(to_hash);
