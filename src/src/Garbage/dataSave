@@ -1,0 +1,96 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public class Blockchain {
+    private static List<User> activeUsers = new ArrayList<>();
+
+    public static void registerUser(User user) {
+        activeUsers.add(user);
+    }
+
+    public static void unregisterUser(User user) {
+        activeUsers.remove(user);
+    }
+
+    public static void broadcast(Block block) {
+        for (User user : activeUsers) {
+            user.receiveBlock(block);
+        }
+    }
+}
+import java.util.ArrayList;
+import java.util.List;
+
+public class Blockchain {
+    private static List<User> activeUsers = new ArrayList<>();
+
+    public static void registerUser(User user) {
+        activeUsers.add(user);
+    }
+
+    public static void unregisterUser(User user) {
+        activeUsers.remove(user);
+    }
+
+    public static void broadcast(Block block) {
+        for (User user : activeUsers) {
+            user.receiveBlock(block);
+        }
+    }
+}
+
+
+
+
+
+
+import java.io.*;
+
+public class DataStorage {
+
+    // Method to save the data to a file
+    public static void saveData(String fileName, Object data) {
+        try {
+            FileOutputStream fileOut = new FileOutputStream(fileName);
+            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+            objectOut.writeObject(data);
+            objectOut.close();
+            fileOut.close();
+            System.out.println("Data saved to " + fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to load the data from a file
+    public static Object loadData(String fileName) {
+        try {
+            FileInputStream fileIn = new FileInputStream(fileName);
+            ObjectInputStream objectIn = new ObjectInputStream(fileIn);
+            Object data = objectIn.readObject();
+            objectIn.close();
+            fileIn.close();
+            System.out.println("Data loaded from " + fileName);
+            return data;
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static void main(String[] args) {
+        // Saving user data
+        User user1 = new User("user1", 100);
+        User user2 = new User("user2", 200);
+        saveData("user_data.dat", new User[]{user1, user2});
+
+        // Saving miner data
+        Miner miner1 = new Miner("miner1");
+        Miner miner2 = new Miner("miner2");
+        saveData("miner_data.dat", new Miner[]{miner1, miner2});
+
+        // Saving blockchain data
+        Blockchain blockchain = new Blockchain();
+        saveData("blockchain_data.dat", blockchain);
+    }
+}

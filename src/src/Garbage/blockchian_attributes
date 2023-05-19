@@ -1,0 +1,13 @@
+In addition to the `Block` and `MemoryPool` classes, a `Blockchain` class should also have the
+following attributes:
+
+1. `chain`: This is a list that holds the actual blockchain. Each element of the list is a
+`Block` object that contains a set of transactions and a hash value.
+2. `difficulty`: This is the level of difficulty for mining new blocks in the blockchain.
+ It determines how hard it is to find a hash value that meets the target criteria.
+3. `reward`: This is the amount of cryptocurrency that is rewarded to a miner for successfully
+mining a new block.
+4. `genesis_block`: This is the first block in the blockchain, which has no previous block.
+It is typically hardcoded into the system and used as the starting point for the chain.
+
+These attributes are necessary to store the blockchain, set the mining difficulty and reward, and define the genesis block.

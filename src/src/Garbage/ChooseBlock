@@ -1,0 +1,71 @@
+public class User {
+    private Blockchain blockchain;
+
+    public User(Blockchain blockchain) {
+        this.blockchain = blockchain;
+    }
+
+    public void transact(Transaction transaction) {
+        // Add transaction to the mempool
+        blockchain.getMempool().addTransaction(transaction);
+    }
+
+    public void chooseChain() {
+        List<Block> chain1 = blockchain.getChain();
+        List<Block> chain2 = blockchain.getAlternateChain();
+
+        // Compare the lengths of the two chains
+        if (chain1.size() > chain2.size()) {
+            // Choose the longest chain
+            blockchain.setAlternateChain(null);
+            System.out.println("User switched to the longest chain.");
+        } else if (chain1.size() < chain2.size()) {
+            // Choose the alternate chain
+            blockchain.setChain(chain2);
+            blockchain.setAlternateChain(chain1);
+            System.out.println("User switched to the alternate chain.");
+        } else {
+            // If the chains have the same length, choose the one with the greater total difficulty
+            double difficulty1 = blockchain.getTotalDifficulty(chain1);
+            double difficulty2 = blockchain.getTotalDifficulty(chain2);
+            if (difficulty1 > difficulty2) {
+                blockchain.setAlternateChain(null);
+                System.out.println("User switched to the chain with the greater total difficulty.");
+            } else {
+                blockchain.setChain(chain2);
+                blockchain.setAlternateChain(chain1);
+                System.out.println("User switched to the alternate chain with the greater total difficulty.");
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+public List<Block> chooseChain() {
+    List<Block> longestChain = blockchain.get(0);
+    int maxDifficulty = calculateDifficulty(longestChain);
+
+    for (List<Block> chain : blockchain) {
+        int difficulty = calculateDifficulty(chain);
+        if (difficulty > maxDifficulty) {
+            maxDifficulty = difficulty;
+            longestChain = chain;
+        }
+    }
+
+    return longestChain;
+}
+
+private int calculateDifficulty(List<Block> chain) {
+    int difficulty = 0;
+    for (Block block : chain) {
+        difficulty += block.getDifficulty();
+    }
+    return difficulty;
+}

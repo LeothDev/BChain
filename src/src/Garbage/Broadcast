@@ -1,0 +1,31 @@
+public void broadcast(ArrayList<Block> newBlockchain) {
+    // Create message with new blockchain
+    String message = "New longest chain found";
+    message += "\n" + newBlockchain.toString();
+
+    // Broadcast message to all connected miners and users
+    for (Miner miner : connectedMiners) {
+        miner.receiveBroadcast(message);
+    }
+    for (User user : connectedUsers) {
+        user.receiveBroadcast(message);
+    }
+}
+
+
+
+public void broadcast(Block block) {
+    // Acquire lock to ensure synchronized access
+    lock.lock();
+
+    try {
+        // Add the block to the blockchain
+        blockchain.add(block);
+
+        // Notify all threads waiting on the lock
+        condition.signalAll();
+    } finally {
+        // Release the lock
+        lock.unlock();
+    }
+}
