@@ -2,8 +2,8 @@ import java.security.*;
 import java.util.Base64;
 
 public class DigitalSignature {
-/*    Java provides built-in support for digital signatures using the
-    Java Cryptography Architecture (JCA) and Java Cryptography Extension (JCE) libraries.*/
+    /*    Java provides built-in support for digital signatures using the
+        Java Cryptography Architecture (JCA) and Java Cryptography Extension (JCE) libraries.*/
     public static byte[] sign(String message, PrivateKey pvk) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         Signature to_sign = Signature.getInstance("SHA256withRSA");
         to_sign.initSign(pvk);
@@ -11,13 +11,13 @@ public class DigitalSignature {
         return to_sign.sign();
     }
 
-/*    public static Boolean verify(byte[] encrypted, PublicKey pubk){
-        // Verify the digital signature using the public key
-        signature.initVerify(pubk);
-        signature.update(message.getBytes());
-        boolean verified = signature.verify(digitalSignature);
-        return verified;
-    }*/
+    /*    public static Boolean verify(byte[] encrypted, PublicKey pubk){
+            // Verify the digital signature using the public key
+            signature.initVerify(pubk);
+            signature.update(message.getBytes());
+            boolean verified = signature.verify(digitalSignature);
+            return verified;
+        }*/
     public static boolean verify(String message, byte[] signature, PublicKey pbk) throws NoSuchAlgorithmException,
             InvalidKeyException, SignatureException {
         /*We start by getting an instance of the Signature class, which is part of the java.security package.

@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.List;
 
 public class Mempool {
 
@@ -48,5 +47,9 @@ public class Mempool {
             }
         }
         return ret;
+    }
+
+    public int size(){
+        return transactions.size();
     }
 }

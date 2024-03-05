@@ -1,7 +1,8 @@
 import java.util.ArrayList;
+
 public class Block {
     private double nonce;
-    
+
     private int MinerWalletAddress;
     private int MinerId;
     private ArrayList<Transaction> transactions;
@@ -23,7 +24,15 @@ public class Block {
         this.nonce = 0;
         this.height = height;
     }
-    
+    Block(String prev_hash, String Merkle_root, ArrayList<Transaction> ts, int height, long timestamp){
+        this.prev_hash = prev_hash;
+        this.Merkle_root = Merkle_root;
+        this.transactions = ts;
+        this.nonce = 0;
+        this.height = height;
+        this.timeStamp = timestamp;
+    }
+
     Block(String prev_hash, String Merkle_root, ArrayList<Transaction> ts, int MinerWallet, int Id, int height){
         this.prev_hash = prev_hash;
         this.Merkle_root = Merkle_root;
@@ -32,13 +41,16 @@ public class Block {
         this.MinerWalletAddress = MinerWallet;
         this.MinerId = Id;
         this.height = height;
-        
+
     }
 
     public String getHash() {
         try {
-            if (prev_hash != null)
+            if (prev_hash == null)
                 throw new InvalidHashException();
+/*            if (prev_hash.isEmpty())
+                //genesis block*/
+
             String to_hash = prev_hash + Merkle_root + String.valueOf(nonce) + String.valueOf(height);
             //update the field hash_of_current_block and return it
             this.hash = HashFunction.applySha256(to_hash);
@@ -46,11 +58,11 @@ public class Block {
 
         } catch (InvalidHashException e) {return null;}
     }
-    
+
     public void addTransaction(Transaction t){
         transactions.add(t);
     }
-    
+
     public void clearTransactions(){
         this.transactions.clear();
     }
@@ -82,7 +94,7 @@ public class Block {
     public void setPreviousHash(String prev_hash){
         this.prev_hash = prev_hash;
     }
-    public String getPreviousHash(){ return prev_hash; }
+
     public void setMerkleRoot(String root) {
         this.Merkle_root = root;
     }
@@ -93,4 +105,11 @@ public class Block {
     public void setHeight(int height){
         this.height = height;
     }
+
+    public String getPrev_hash(){
+        return prev_hash;
+    }
+
+    public int getMinerWalletAddress(){return MinerWalletAddress;}
+    public int getMinerId(){return MinerId;}
 }

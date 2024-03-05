@@ -1,4 +1,3 @@
-import Garbage.Blockchain;
 
 import java.nio.charset.StandardCharsets;
 import java.security.*;
@@ -12,91 +11,80 @@ import java.util.concurrent.locks.ReentrantLock;*/
 public class Miner extends User {
     // above functionalities are already inherited from user by using extends User
 
-    private Blockchain longestBlockchain;
+    private ArrayList<Block> longestBlockchain;
+    /*
     private PrivateKey private_key;
     public PublicKey public_key;
-    private Wallet wallet;
-    private ArrayList<Transaction> transactionPool;
-    private final int miningReward = 1;
-
-    private final static int difficulty = 3;
+    private Wallet wallet;*/
+    protected ArrayList<Transaction> transactionPool;
 
     private Lock lock;
     private Condition broadcasted;
 
     Miner() {
         super();
-        generate_keys();
+        transactionPool = new ArrayList<Transaction>();
+        longestBlockchain = longest_chain;
+        /*generate_keys();
         this.Id = ++super.Id;
         this.wallet = new Wallet(++super.wallet_adr);
         lock = new ReentrantLock();
         broadcasted = lock.newCondition();
-        this.longestBlockchain = Blockchain.getLongestChain;
+        this.longestBlockchain = Blockchain.getLongestChain();
+        above functionalities are already done by calling the super() constructor*/
     }
 
     Miner(String name) {
         super(name);
-        generate_keys();
-        this.Id = ++super.Id;
-        this.wallet = new Wallet(++super.wallet_adr);
-        lock = new ReentrantLock();
-        broadcasted= lock.newCondition();
-        this.longestBlockchain = Blockchain.getLongestChain;
+        transactionPool = new ArrayList<Transaction>();
+        longestBlockchain = longest_chain;
+    }
+    Miner(String name, double initial_value) {
+        super(name, initial_value);
+        transactionPool = new ArrayList<Transaction>();
+        longestBlockchain = longest_chain;
     }
 
     public void addTransaction(Transaction transaction) {
         transactionPool.add(transaction);
     }
 
-    private void broadcastBlock(Block block) {
-/*        // In a real implementation, this method would send the new block to other nodes on the network
-        // Add the block to the blockchain
-        //longestBlockchain.addBlock(block);
-        // acquire the lock and signal all waiting threads
-        lock.lock();
-        try {
-            // add the block to the blockchain
-            longestBlockchain.addBlock(block);
-            // signal all waiting threads that a new block has been added
-            broadcasted.signalAll();
-            System.out.println("Miner " + Id + " broadcasting block: " + block);
-        } finally {
-            lock.unlock();
-        }*/
-        // Notify all threads that a new block has been added to the blockchain
+    protected void broadcastBlock(Block block) {
 
-        //synchronization should be on the blockchain object
-        //Blockchain.addNewBlock(block);
         System.out.println("Miner " + Id + " broadcasting block: " + block);
     }
 
     @Override
     public void run() {
-
         while (!isInterrupted()) {
             // get transaction(s) from mempool class
             // create a block of class Block
             Block newBlock;
             do {
                 newBlock = mineBlock();
-            }while(newBlock == null); //if newBlock is null -> means mineBlock() failed
+            } while (newBlock == null && !isInterrupted()); //if newBlock is null -> means mineBlock() failed
+
+            if(newBlock!=null)
+                System.out.println("Oh yeah I mined a Block!");
+            if(isInterrupted())
+                break;
 
             // If the miner is the first:  claim the reward(the system does)and broadcast the block
-            Blockchain Checkchain = Blockchain.getLongestChain();
-            if (Checkchain.size() <= 1 + longestBlockchain.size()){
+            ArrayList<Block> Checkchain = Blockchain.getLongestChain();
+            if (Checkchain.size() <= 1 + longestBlockchain.size()) {
                 Blockchain.addBlock(newBlock);
+                longestBlockchain = Blockchain.getLongestChain();
                 // update transaction pool (done by the Blockchain by removing included transactions)
-                longestBlockchain.addBlock(newBlock);
                 broadcastBlock(newBlock);
                 System.out.println("Block mined: " + newBlock.getHash());
                 System.out.println("Nonce value: " + newBlock.getNonce());
-                System.out.println("Mining time: " + newBlock.getTimeStamp() + " ms");
-            }
-            else
+                System.out.println("Mining time(timestamp): " + newBlock.getTimeStamp() + " ms");
+            } else
                 longestBlockchain = Checkchain;
             // else: in the meantime someone succeded, change the block(pointer to prev block)
             // this can be done be comparing latestBroadcasted block with mine
         }
+        System.out.println("Miner " + getName() + " quit the system" );
     }
 
     public boolean verifyTransaction(Transaction transaction) {
@@ -114,30 +102,39 @@ public class Miner extends User {
     }
 
     private Block mineBlock(){
-        //probably getTransactions needs to be a method of class Blockchain since the pool is part
-        //of the Blockchain system
         //transactionPool = Mempool.getTransactions();
-        transactionPool = BlockChain.getTransactions();
+
+        //different transactionpool(Transactions to include for every miner)
+        transactionPool = new ArrayList<Transaction>(Blockchain.getTransactions());
 
         //Check if they are valid
         Block mining_block = new Block();
         //Block mining_block;
-        Blockchain CheckChain = Blockchain.getLongestChain();
+        ArrayList<Block> Checkchain = Blockchain.getLongestChain();
 
         mining_block.setMinerWallet(wallet.getWallet_address());
         mining_block.setMinerId(get_Id());
 
         do {
-            if (Checkchain.size() > longestBlockchain) {
+            if (Checkchain!=null && Checkchain.size() > longestBlockchain.size()) {
                 //if there is already a longer chain (someone succedded before me)
                 longestBlockchain = Checkchain;
-                transactionPool.update(CheckChain);
+                ArrayList<Transaction> current_to_validate = Blockchain.getTransactions();
+                for(Transaction t: transactionPool){
+                    if(!current_to_validate.contains(t))
+                        transactionPool.remove(t);
+                }
             } else {
-                transactionPool = Mempool.getTransactions(longestBlockchain, transactionPool);
+                transactionPool = new ArrayList<Transaction>(Blockchain.getTransactions(transactionPool));
             }
-        }while(transactionPool.size()<7);
+        }while(transactionPool.size()<7 && !isInterrupted());
+        if(isInterrupted())
+            return null;
         //accumulate 8 transactions to start a block (first one is the one to receive rewards - coinbase)
 
+        //System.out.println("I am Miner and now I accumulated: " + transactionPool.size() + " transactions");
+        String mes = "I am Miner and now I accumulated: " + transactionPool.size() + " transactions";
+        Blockchain.printMessages(mes);
         double total_fees = 0;
 
         for(Transaction transac : transactionPool){
@@ -151,25 +148,29 @@ public class Miner extends User {
             }catch(NoSuchAlgorithmException|SignatureException|InvalidKeyException e){}
         }
         double rewards = Blockchain.getReward() + total_fees;
-        Transaction coinbase = new Transaction(public_key, wallet.getWallet_address(),rewards);
+        Transaction coinbase = new Transaction(wallet.getWallet_address(),rewards);
         try {
             coinbase.setSignature(DigitalSignature.sign(coinbase.toString(), private_key));
-        }catch(NoSuchAlgorithmException|InvalidKeyException|SignatureException e){}
+        }catch(NoSuchAlgorithmException|InvalidKeyException|SignatureException e){
+            System.out.println(">>>>>>Exception occured in mineBlock() while checking signatures<<<<<<<<");
+        }
         transactionPool.add(0, coinbase);
 
         //set the campus: Hash of previous block(Hash of the last block)
         mining_block.setPreviousHash(longestBlockchain.get(longestBlockchain.size()-1).getHash());
+        //System.out.println(longestBlockchain.get(longestBlockchain.size()-1).getHash());
         MerkleTree tree = new MerkleTree();
         String root = tree.getRoot(transactionPool);
         mining_block.setMerkleRoot(root);
-
+        mining_block.setHeight(longestBlockchain.size()-1);
 
         //now we can calculate proof of work -> when calculating check if there is some broadcast
         double nonce = calculateProofOfWork(mining_block);
-        if(nonce == -1)
+        if(nonce == -1) {
             // the miner has failed, because someone succeded before him
-            longestBlockchain = BlockChain.getLongestChain();
+            longestBlockchain = Blockchain.getLongestChain();
             return null;
+        }
         mining_block.setNonce(nonce);
         long timestamp = System.currentTimeMillis() / 1000; // convert to seconds
         mining_block.setTimeStamp(timestamp);
@@ -179,18 +180,20 @@ public class Miner extends User {
         //check if a new block arrives when calculating proof of work
         block.setNonce(0);
         double nonce = 0;
-        double hash_of_block = mining_block.getHash();
+        //double hash_of_block = mining_block.getHash();
 
         // Start mining process
         long startTime = new Date().getTime();
-        String hash = String.valueOf(hash_of_block);
+        //String hash = String.valueOf(hash_of_block);
+        String hash = block.getHash();
         while (!hash.substring(0, Blockchain.difficulty).equals("0".repeat(Blockchain.difficulty))) {
             if(tooSlow())
                 return -1;
             nonce++;
             block.setNonce(nonce);
-            hash = String.valueOf(block.getHash());
-            hash = applySha256(hash);
+            //hash = String.valueOf(block.getHash());
+            //hash = applySha256(hash);
+            hash = block.getHash();
         }
         long endTime = new Date().getTime();
 
@@ -202,8 +205,8 @@ public class Miner extends User {
         return nonce;
     }
 
-    private boolean tooSlow(){
-        return Blockchain.getLongestChain().size() > longestBlockchain;
+    boolean tooSlow(){
+        return Blockchain.getLongestChain().size() > longestBlockchain.size();
     }
     private static String applySha256(String input) {
         try {
@@ -222,6 +225,8 @@ public class Miner extends User {
             throw new RuntimeException(e);
         }
     }
+
+
 }
 
 
