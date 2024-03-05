@@ -10,9 +10,10 @@ public class Transaction {
     private Wallet senderWallet;
     private Wallet recipientWallet;
     private byte[] signature;
-    public Transaction(PublicKey publicKey, int recipientWalletAdr, double transactionAmount) {
-        this.publicKey = publicKey;
+
+    public Transaction(int recipientWalletAdr, double transactionAmount) {
         this.recipientWalletAdr = recipientWalletAdr;
+        this.recipientWallet = User.getWalletByAddress(recipientWalletAdr);
         this.transactionAmount = transactionAmount;
     }
     public Transaction(PublicKey publicKey, int senderId, int recipientWalletAdr, double transactionAmount) {
@@ -29,13 +30,30 @@ public class Transaction {
         this.fee = fee;
     }
 
-    public void processTransaction(Wallet sender, Wallet recipient) throws SignatureException, NoSuchAlgorithmException, InvalidKeyException {
-        if(verifySignature() && notProcessed){
-            senderWallet.updateBalance(-transactionAmount);
-            recipientWallet.updateBalance(transactionAmount);
-            notProcessed = false;
+    public Transaction(PublicKey publicKey, int senderId, double amount,Wallet senderWallet, Wallet recipientWallet){
+        this.publicKey = publicKey;
+        this.senderId = senderId;
+        this.senderWallet = senderWallet;
+        this.recipientWallet = recipientWallet;
+        this.recipientWalletAdr = recipientWallet.getWallet_address();
+        this.transactionAmount = amount;
+    }
+
+    public void processTransaction()  {
+        try {
+            if(senderId != 0 && senderWallet!=null){
+                if (verifySignature() && notProcessed) {
+                    senderWallet.updateBalance(-transactionAmount);
+                    recipientWallet.updateBalance(transactionAmount);
+                    notProcessed = false;
+                }
             }
-        }
+            else{
+                recipientWallet.updateBalance(transactionAmount);
+            }
+        }catch (SignatureException| NoSuchAlgorithmException|InvalidKeyException e){}
+    }
+
 
 
 /*    public byte[] sign(PrivateKey privateKey) throws SignatureException, NoSuchAlgorithmException, InvalidKeyException {
@@ -94,7 +112,7 @@ public class Transaction {
     public void setFee(double fees){
         this.fee = fees;
     }
-
-
+    public Wallet getSenderWallet(){return senderWallet;}
+    public Wallet getRecipientWallet(){return recipientWallet;}
 }
 
